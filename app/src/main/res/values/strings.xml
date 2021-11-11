@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">AutoRun</string>
+    <!-- Strings related to login -->
+    <string name="prompt_phone">手机号</string>
+    <string name="prompt_password">密码</string>
+    <string name="prompt_app_version">应用版本</string>
+    <string name="prompt_app_version_default">1.8.0</string>
+    <string name="prompt_brand">品牌</string>
+    <string name="prompt_mobile_type">手机型号</string>
+    <string name="prompt_sys_version">系统版本</string>
+    <string name="prompt_distance">跑步距离(米)</string>
+    <string name="prompt_time">跑步时间(分钟)</string>
+    <string name="action_sign_in">开始</string>
+    <string name="action_sign_in_short">开始</string>
+    <string name="welcome">"Welcome !"</string>
+    <string name="invalid_username">手机号非法</string>
+    <string name="invalid_password">密码必须大于5个字符</string>
+    <string name="login_failed">"Login failed"</string>
+    <string name="omen_result">"操作结果："</string>
+</resources>
