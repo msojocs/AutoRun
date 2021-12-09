@@ -4,7 +4,7 @@
     <string name="prompt_phone">手机号</string>
     <string name="prompt_password">密码</string>
     <string name="prompt_app_version">应用版本</string>
-    <string name="prompt_app_version_default">1.8.0</string>
+    <string name="prompt_app_version_default">1.8.2</string>
     <string name="prompt_brand">品牌</string>
     <string name="prompt_mobile_type">手机型号</string>
     <string name="prompt_sys_version">系统版本</string>
