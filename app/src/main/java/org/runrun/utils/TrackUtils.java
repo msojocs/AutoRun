@@ -1,11 +1,10 @@
-package org.example.utils;
+package org.runrun.utils;
 
-import org.example.entity.Location;
+import org.runrun.entity.Location;
 import org.gavaghan.geodesy.Ellipsoid;
 import org.gavaghan.geodesy.GeodeticCalculator;
 import org.gavaghan.geodesy.GlobalCoordinates;
 
-import java.math.BigDecimal;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -40,11 +39,14 @@ public class TrackUtils {
         long startTime = new Date().getTime() - 30 * 60 * 1000;
         int lastIndex = -1;
 
+        String[] current = currentLocation.getLocation().split(",");
+        result.add(String.format("%s-%s-%s-%.1f", current[0], current[1], startTime, randAccuracy()));
+
         while (currentDistance < distance){
-            String current = currentLocation.getLocation();
+            current = currentLocation.getLocation().split(",");
             int[] edge = currentLocation.getEdge();
 
-            // 选择下一个结点
+            // 随机选择下一个结点
             if(edge.length == 0){
                 System.out.println("edge为空");
             }
@@ -54,17 +56,16 @@ public class TrackUtils {
             if(edgeIndex == lastIndex){
                 edgeIndex = edge[(randInt + 1)%edge.length];
             }
+            // 下一个位置
             Location next = locations[edgeIndex];
 
-            String[] start = current.split(",");
+            String[] start = current;
             String[] end = next.getLocation().split(",");
             double[] startData = new double[]{Double.parseDouble(start[0]), Double.parseDouble(start[1])};
             double[] endData = new double[]{Double.parseDouble(end[0]), Double.parseDouble(end[1])};
 
             double goDistance = CalculateDistance(startData, endData);
             currentDistance += goDistance;
-
-            result.add(String.format("%s-%s-%s-%.1f", start[0], start[1], startTime, randAccuracy()));
 
             double[] lastRandPos = startData;
             for (int i = 0; i < 10; i++) {
@@ -113,28 +114,18 @@ public class TrackUtils {
 
     /**
      * 随机取一个经过点
-     * @param start {经度, 维度}
+     * @param start {经度x, 维度y}
      * @return
      */
     public static double[] randPos(double[] start, double[] end){
+        double random = Math.random();
         // y = ax + b
-        double dy = end[0] - start[0];
-        if(dy == 0)dy = 0.00000001;
-        double a = (end[1] - start[1])/ (dy);
-        a = a + a*0.2; // 斜率波动
-        double b = end[1] - a * end[0];
-        double x = start[0] + (dy) * Math.random();
-
-        double[] result = new double[]{};
-        try{
-            x = new BigDecimal(x).setScale(6, BigDecimal.ROUND_DOWN).doubleValue();
-            double y = new BigDecimal(a * x + b).setScale(6, BigDecimal.ROUND_DOWN).doubleValue();
-            result = new double[]{x, y};
-        }catch (Exception e){
-            e.printStackTrace();
-        }
-
-        return result;
+        double dy = end[1] - start[1];
+        double dx = end[0] - start[0];
+        return new double[]{
+                start[0] + dx * random,
+                start[1] + dy * random
+        };
     }
     public static double randAccuracy(){
         return 10 * Math.random();

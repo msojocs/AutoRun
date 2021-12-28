@@ -1,4 +1,4 @@
-package org.example.utils;
+package org.runrun.utils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;

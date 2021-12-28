@@ -1,20 +1,16 @@
 package com.example.autorun.ui.login;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
-
-import androidx.lifecycle.Observer;
-import androidx.lifecycle.ViewModelProvider;
-
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
-
-import androidx.annotation.Nullable;
-import androidx.annotation.StringRes;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.method.ScrollingMovementMethod;
-import android.view.KeyEvent;
+import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
@@ -23,20 +19,49 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.StringRes;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
+
 import com.example.autorun.R;
 import com.example.autorun.databinding.ActivityLoginBinding;
 import com.example.autorun.helper.App;
+import com.example.autorun.helper.CheckAllow;
 import com.example.autorun.helper.SystemUtil;
 
-import org.example.entity.AppConfig;
+import org.runrun.entity.AppConfig;
 
+import java.io.InputStream;
+import java.lang.reflect.Field;
+import java.util.Objects;
 
 
 public class LoginActivity extends AppCompatActivity {
 
+    private static String TAG = LoginActivity.class.getSimpleName();
+    public static final String PREFS_NAME = LoginActivity.class.getName();
+    public static final String IS_LOCAL = "IS_LOCAL";
+    public static final String HOSTS_URI = "HOST_URI";
+    public static final String NET_HOST_FILE = "net_hosts";
+    public static final String MAP_PREFIX = "地图：";
     private LoginViewModel loginViewModel;
     private ActivityLoginBinding binding;
 
+    ActivityResultLauncher<Intent> selectFileLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                Log.i(TAG, String.format("code:%d", result.getResultCode()));
+                if (result.getResultCode() == RESULT_OK) {
+                    // There are no request codes
+                    Intent data = result.getData();
+                    assert data != null;
+                    setUriByPREFS(data);
+                }
+            }
+    );
+    @SuppressLint("SetTextI18n")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,7 +78,9 @@ public class LoginActivity extends AppCompatActivity {
         final EditText  inputDistance = binding.inputDistance;
         final EditText inputTimeEditText = binding.inputTime;
         final TextView resultArea = binding.result;
+        final EditText mapFileArea = binding.mapFile;
         final Button loginButton = binding.login;
+        final Button loadMapButton = binding.loadMap;
         final ProgressBar loadingProgressBar = binding.loading;
 
         resultArea.setMovementMethod(ScrollingMovementMethod.getInstance());
@@ -61,40 +88,34 @@ public class LoginActivity extends AppCompatActivity {
         resultArea.setVerticalScrollBarEnabled(true);
         resultArea.setFocusable(true);
 
-        loginViewModel.getLoginFormState().observe(this, new Observer<LoginFormState>() {
-            @Override
-            public void onChanged(@Nullable LoginFormState loginFormState) {
-                if (loginFormState == null) {
-                    return;
-                }
-                loginButton.setEnabled(loginFormState.isDataValid());
-                if (loginFormState.getUsernameError() != null) {
-                    usernameEditText.setError(getString(loginFormState.getUsernameError()));
-                }
-                if (loginFormState.getPasswordError() != null) {
-                    passwordEditText.setError(getString(loginFormState.getPasswordError()));
-                }
+        loginViewModel.getLoginFormState().observe(this, loginFormState -> {
+            if (loginFormState == null) {
+                return;
+            }
+            loginButton.setEnabled(loginFormState.isDataValid());
+            if (loginFormState.getUsernameError() != null) {
+                usernameEditText.setError(getString(loginFormState.getUsernameError()));
+            }
+            if (loginFormState.getPasswordError() != null) {
+                passwordEditText.setError(getString(loginFormState.getPasswordError()));
             }
         });
 
-        loginViewModel.getLoginResult().observe(this, new Observer<LoginResult>() {
-            @Override
-            public void onChanged(@Nullable LoginResult loginResult) {
-                if (loginResult == null) {
-                    return;
-                }
-                loadingProgressBar.setVisibility(View.GONE);
-                if (loginResult.getError() != null) {
-                    showLoginFailed(loginResult.getError());
-                }
-                if (loginResult.getSuccess() != null) {
-                    updateUiWithUser(loginResult.getSuccess());
-                }
-                setResult(Activity.RESULT_OK);
-
-                //Complete and destroy login activity once successful
-                finish();
+        loginViewModel.getLoginResult().observe(this, loginResult -> {
+            if (loginResult == null) {
+                return;
             }
+            loadingProgressBar.setVisibility(View.GONE);
+            if (loginResult.getError() != null) {
+                showLoginFailed(loginResult.getError());
+            }
+            if (loginResult.getSuccess() != null) {
+                updateUiWithUser(loginResult.getSuccess());
+            }
+            setResult(Activity.RESULT_OK);
+
+            //Complete and destroy login activity once successful
+            finish();
         });
 
         TextWatcher afterTextChangedListener = new TextWatcher() {
@@ -116,44 +137,8 @@ public class LoginActivity extends AppCompatActivity {
         };
         usernameEditText.addTextChangedListener(afterTextChangedListener);
         passwordEditText.addTextChangedListener(afterTextChangedListener);
-        passwordEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-
-            @Override
-            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                if (actionId == EditorInfo.IME_ACTION_DONE) {
-                    resultArea.setText("操作结果：");
-                    loadingProgressBar.setVisibility(View.VISIBLE);
-
-                    AppConfig appConfig = new AppConfig();
-                    appConfig.setPhone(usernameEditText.getText().toString());
-                    appConfig.setPassword(passwordEditText.getText().toString());
-                    appConfig.setAppVersion(appVersionEditText.getText().toString());
-
-                    appConfig.setBrand(SystemUtil.getDeviceBrand());
-                    appConfig.setMobileType(SystemUtil.getSystemModel());
-                    appConfig.setSysVersion(SystemUtil.getSystemVersion());
-
-                    String distance = inputDistance.getText().toString();
-                    if(distance.length()>0)
-                        appConfig.setDistance(Long.parseLong(distance));
-                    String time = inputTimeEditText.getText().toString();
-                    if(time.length()>0)
-                        appConfig.setRunTime(Integer.parseInt(inputTimeEditText.getText().toString()));
-
-                    System.out.println(appConfig);
-                    App app = new App(appConfig);
-                    app.setResultArea(resultArea);
-                    app.setLoadingProgressBar(loadingProgressBar);
-                    app.start();
-                }
-                return false;
-            }
-        });
-
-//        loginButton.setEnabled(true);
-        loginButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        passwordEditText.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
                 resultArea.setText("操作结果：");
                 loadingProgressBar.setVisibility(View.VISIBLE);
 
@@ -168,20 +153,74 @@ public class LoginActivity extends AppCompatActivity {
 
                 String distance = inputDistance.getText().toString();
                 if(distance.length()>0)
-                appConfig.setDistance(Long.parseLong(distance));
+                    appConfig.setDistance(Long.parseLong(distance));
                 String time = inputTimeEditText.getText().toString();
                 if(time.length()>0)
-                appConfig.setRunTime(Integer.parseInt(inputTimeEditText.getText().toString()));
+                    appConfig.setRunTime(Integer.parseInt(inputTimeEditText.getText().toString()));
 
                 System.out.println(appConfig);
                 App app = new App(appConfig);
                 app.setResultArea(resultArea);
                 app.setLoadingProgressBar(loadingProgressBar);
                 app.start();
+            }
+            return false;
+        });
+
+        SharedPreferences settings = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        String mapPath = settings.getString(HOSTS_URI, null);
+        if(mapPath != null) {
+            Log.i(TAG, "map-path: " + mapPath);
+            String[] split = mapPath.split("%2F");
+            if(split.length > 0) {
+                mapFileArea.setText(MAP_PREFIX + split[split.length - 1]);
+            }
+        }
+//        loginButton.setEnabled(true);
+        loginButton.setOnClickListener(v -> {
+            resultArea.setText("操作结果：");
+            loadingProgressBar.setVisibility(View.VISIBLE);
+
+            // 配置填写的信息
+            AppConfig appConfig = new AppConfig();
+            appConfig.setPhone(usernameEditText.getText().toString());
+            appConfig.setPassword(passwordEditText.getText().toString());
+            appConfig.setAppVersion(appVersionEditText.getText().toString());
+
+            // 配置系统信息
+            appConfig.setBrand(SystemUtil.getDeviceBrand());
+            appConfig.setMobileType(SystemUtil.getSystemModel());
+            appConfig.setSysVersion(SystemUtil.getSystemVersion());
+
+            String distance = inputDistance.getText().toString();
+            if(distance.length()>0)
+            appConfig.setDistance(Long.parseLong(distance));
+            String time = inputTimeEditText.getText().toString();
+            if(time.length()>0)
+            appConfig.setRunTime(Integer.parseInt(inputTimeEditText.getText().toString()));
+
+//            SharedPreferences settings = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            InputStream inputStream;
+
+            try {
+                inputStream = getContentResolver().openInputStream(Uri.parse(settings.getString(HOSTS_URI, null)));
+            } catch (Exception e) {
+                Log.e(TAG, "HOSTS FILE NOT FOUND", e);
+                inputStream = null;
+            }
+
+            Log.i(TAG, appConfig.toString());
+            App app = new App(appConfig);
+            app.setResultArea(resultArea);
+            app.setLoadingProgressBar(loadingProgressBar);
+            app.setMapInput(inputStream);
+            app.start();
 //                loginViewModel.login(usernameEditText.getText().toString(),
 //                        passwordEditText.getText().toString());
-            }
         });
+
+        loadMapButton.setOnClickListener(view -> selectFile());
+        new CheckAllow().start();
     }
 
     private void updateUiWithUser(LoggedInUserView model) {
@@ -192,5 +231,84 @@ public class LoginActivity extends AppCompatActivity {
 
     private void showLoginFailed(@StringRes Integer errorString) {
         Toast.makeText(getApplicationContext(), errorString, Toast.LENGTH_SHORT).show();
+    }
+
+    private void selectFile() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.setType("*/*");
+        try {
+            String SHOW_ADVANCED;
+            try {
+                Field f = android.provider.DocumentsContract.class.getField("EXTRA_PROMPT");
+                SHOW_ADVANCED = Objects.requireNonNull(f.get(f.getName())).toString();
+            }catch (NoSuchFieldException e){
+                Log.e(TAG,e.getMessage(),e);
+                SHOW_ADVANCED = "android.content.extra.SHOW_ADVANCED";
+            }
+            intent.putExtra(SHOW_ADVANCED, true);
+        } catch (Throwable e) {
+            Log.e(TAG, "SET EXTRA_SHOW_ADVANCED", e);
+        }
+
+        try {
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+//            startActivityForResult(intent, SELECT_FILE_CODE);
+            selectFileLauncher.launch(intent);
+        } catch (Exception e) {
+            Toast.makeText(this, R.string.file_select_error, Toast.LENGTH_LONG).show();
+            Log.e(TAG, "START SELECT_FILE_ACTIVE FAIL",e);
+            SharedPreferences settings = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = settings.edit();
+            editor.putBoolean(IS_LOCAL, false);
+            editor.apply();
+            startActivity(new Intent(getApplicationContext(), LoginActivity.class));
+        }
+
+    }
+
+    @SuppressLint("SetTextI18n")
+    private void setUriByPREFS(Intent intent) {
+        SharedPreferences settings = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = settings.edit();
+        Uri uri = intent.getData();
+        int takeFlags = (Intent.FLAG_GRANT_READ_URI_PERMISSION
+                | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        try {
+            getContentResolver().takePersistableUriPermission(uri, takeFlags);
+            editor.putString(HOSTS_URI, uri.toString());
+            editor.apply();
+            if (checkHostUri() == 1) {
+                String[] split = uri.toString().split("%2F");
+                final EditText mapFileArea = binding.mapFile;
+                mapFileArea.setText(MAP_PREFIX + split[split.length - 1]);
+                Toast.makeText(this, R.string.file_select_ok, Toast.LENGTH_LONG).show();
+            } else {
+                Toast.makeText(this, R.string.permission_error, Toast.LENGTH_LONG).show();
+            }
+
+        } catch (Exception e) {
+            Log.e(TAG, "permission error", e);
+        }
+
+    }
+    private int checkHostUri() {
+        SharedPreferences settings = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        if (settings.getBoolean(LoginActivity.IS_LOCAL, true)) {
+            try {
+                getContentResolver().openInputStream(Uri.parse(settings.getString(HOSTS_URI, null))).close();
+                return 1;
+            } catch (Exception e) {
+                Log.e(TAG, "HOSTS FILE NOT FOUND", e);
+                return -1;
+            }
+        } else {
+            try {
+                openFileInput(LoginActivity.NET_HOST_FILE).close();
+                return 2;
+            } catch (Exception e) {
+                Log.e(TAG, "NET HOSTS FILE NOT FOUND", e);
+                return -2;
+            }
+        }
     }
 }

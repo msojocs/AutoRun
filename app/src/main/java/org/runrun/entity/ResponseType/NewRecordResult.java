@@ -1,4 +1,4 @@
-package org.example.entity.ResponseType;
+package org.runrun.entity.ResponseType;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;

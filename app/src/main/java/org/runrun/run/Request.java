@@ -1,18 +1,18 @@
-package org.example.run;
+package org.runrun.run;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import lombok.Setter;
+
 import org.apache.hc.core5.http.ParseException;
-import org.example.entity.AppConfig;
-import org.example.entity.NewRecordBody;
-import org.example.entity.Response;
-import org.example.entity.ResponseType.RunStandard;
-import org.example.entity.ResponseType.SchoolBound;
-import org.example.entity.ResponseType.UserInfo;
-import org.example.utils.HTTP.HttpUtil2;
-import org.example.utils.JsonUtils;
-import org.example.utils.MD5Utils;
-import org.example.utils.SignUtils;
+import org.runrun.entity.AppConfig;
+import org.runrun.entity.NewRecordBody;
+import org.runrun.entity.Response;
+import org.runrun.entity.ResponseType.RunStandard;
+import org.runrun.entity.ResponseType.SchoolBound;
+import org.runrun.entity.ResponseType.UserInfo;
+import org.runrun.utils.HTTP.HttpUtil2;
+import org.runrun.utils.JsonUtils;
+import org.runrun.utils.MD5Utils;
+import org.runrun.utils.SignUtils;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -95,13 +95,13 @@ public class Request {
         return -1;
     }
 
-    public SchoolBound[] getSchoolBound(){
+    public SchoolBound[] getSchoolBound(long schoolId){
 
-        String API = "https://run-lb.tanmasports.com/v1/unirun/querySchoolBound?schoolId=3680";
+        String API = "https://run-lb.tanmasports.com/v1/unirun/querySchoolBound?schoolId=" + schoolId;
         try {
             Map<String, String> headers = new HashMap<>();
             Map<String, String> params = new HashMap<>();
-            params.put("schoolId", "3680");
+            params.put("schoolId", String.valueOf(schoolId));
             String sign = SignUtils.get(params, null);
             headers.put("sign", sign);
             headers.put("token", token);
@@ -121,13 +121,13 @@ public class Request {
         return null;
     }
 
-    public RunStandard getRunStandard(){
+    public RunStandard getRunStandard(long schoolId){
 
-        String API = "https://run-lb.tanmasports.com/v1/unirun/query/runStandard?schoolId=3680";
+        String API = "https://run-lb.tanmasports.com/v1/unirun/query/runStandard?schoolId=" + schoolId;
         try {
             Map<String, String> headers = new HashMap<>();
             Map<String, String> params = new HashMap<>();
-            params.put("schoolId", "3680");
+            params.put("schoolId", String.valueOf(schoolId));
             String sign = SignUtils.get(params, null);
             headers.put("sign", sign);
             headers.put("token", token);

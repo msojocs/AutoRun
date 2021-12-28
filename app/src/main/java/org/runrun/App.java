@@ -1,18 +1,18 @@
-package org.example;
+package org.runrun;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import org.example.entity.AppConfig;
-import org.example.entity.Location;
-import org.example.entity.NewRecordBody;
-import org.example.entity.Response;
-import org.example.entity.ResponseType.NewRecordResult;
-import org.example.entity.ResponseType.RunStandard;
-import org.example.entity.ResponseType.SchoolBound;
-import org.example.entity.ResponseType.UserInfo;
-import org.example.run.Request;
-import org.example.utils.FileUtil;
-import org.example.utils.JsonUtils;
-import org.example.utils.TrackUtils;
+import org.runrun.entity.AppConfig;
+import org.runrun.entity.Location;
+import org.runrun.entity.NewRecordBody;
+import org.runrun.entity.Response;
+import org.runrun.entity.ResponseType.NewRecordResult;
+import org.runrun.entity.ResponseType.RunStandard;
+import org.runrun.entity.ResponseType.SchoolBound;
+import org.runrun.entity.ResponseType.UserInfo;
+import org.runrun.run.Request;
+import org.runrun.utils.FileUtil;
+import org.runrun.utils.JsonUtils;
+import org.runrun.utils.TrackUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -85,11 +85,10 @@ public class App {
 
         Request request = new Request(token, config);
         UserInfo userInfo = request.login(phone, password);
-        long userId1 = request.getUserId();
         long userId = userInfo.getUserId();
         if (userId != -1) {
-            RunStandard runStandard = request.getRunStandard();
-            SchoolBound[] schoolBounds = request.getSchoolBound();
+            RunStandard runStandard = request.getRunStandard(userInfo.getSchoolId());
+            SchoolBound[] schoolBounds = request.getSchoolBound(userInfo.getSchoolId());
             // 新增跑步数据
             NewRecordBody recordBody = new NewRecordBody();
             recordBody.setUserId(userId);

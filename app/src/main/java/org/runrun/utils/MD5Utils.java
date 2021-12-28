@@ -1,4 +1,4 @@
-package org.example.utils;
+package org.runrun.utils;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;

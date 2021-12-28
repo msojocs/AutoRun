@@ -21,6 +21,7 @@
         android:hint="@string/prompt_phone"
         android:inputType="phone"
         android:maxLength="11"
+        android:minHeight="48dp"
         android:selectAllOnFocus="true"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -37,6 +38,7 @@
         android:imeActionLabel="@string/action_sign_in_short"
         android:imeOptions="actionDone"
         android:inputType="textPassword"
+        android:minHeight="48dp"
         android:selectAllOnFocus="true"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -47,18 +49,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="start"
-        android:layout_marginStart="48dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="28dp"
         android:layout_marginEnd="48dp"
-        android:layout_marginBottom="64dp"
         android:enabled="false"
         android:text="@string/action_sign_in"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.436"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/password"
-        app:layout_constraintVertical_bias="0.363" />
+        app:layout_constraintTop_toBottomOf="@+id/map_file" />
 
     <ProgressBar
         android:id="@+id/loading"
@@ -91,7 +87,7 @@
     <com.google.android.material.textfield.TextInputEditText
         android:id="@+id/inputDistance"
         android:layout_width="107dp"
-        android:layout_height="40dp"
+        android:layout_height="48dp"
         android:layout_marginStart="24dp"
         android:layout_marginTop="24dp"
         android:hint="@string/prompt_distance"
@@ -102,7 +98,7 @@
     <com.google.android.material.textfield.TextInputEditText
         android:id="@+id/inputTime"
         android:layout_width="141dp"
-        android:layout_height="45dp"
+        android:layout_height="48dp"
         android:layout_marginTop="24dp"
         android:layout_marginEnd="24dp"
         android:hint="@string/prompt_time"
@@ -124,5 +120,35 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/login"
         app:layout_constraintVertical_bias="0.024" />
+
+    <Button
+        android:id="@+id/load_map"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="40dp"
+        android:layout_marginTop="24dp"
+        android:text="加载地图"
+        app:layout_constraintEnd_toStartOf="@+id/login"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/inputAppVersion" />
+
+    <EditText
+        android:id="@+id/map_file"
+        android:layout_width="134dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="28dp"
+        android:layout_marginEnd="32dp"
+        android:enabled="true"
+        android:focusable="false"
+        android:inputType="textPersonName"
+        android:isScrollContainer="true"
+        android:scrollbarAlwaysDrawHorizontalTrack="true"
+        android:scrollbarStyle="outsideInset"
+        android:scrollbars="horizontal"
+        android:scrollHorizontally="true"
+        android:text="@string/map_default"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/inputTime" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

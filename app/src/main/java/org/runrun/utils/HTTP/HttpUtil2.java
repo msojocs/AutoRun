@@ -1,4 +1,4 @@
-package org.example.utils.HTTP;
+package org.runrun.utils.HTTP;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;

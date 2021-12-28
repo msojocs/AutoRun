@@ -13,18 +13,18 @@ import com.example.autorun.ui.login.LoginActivity;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import org.apache.hc.core5.http.ParseException;
-import org.example.entity.AppConfig;
-import org.example.entity.Location;
-import org.example.entity.NewRecordBody;
-import org.example.entity.Response;
-import org.example.entity.ResponseType.NewRecordResult;
-import org.example.entity.ResponseType.RunStandard;
-import org.example.entity.ResponseType.SchoolBound;
-import org.example.entity.ResponseType.UserInfo;
-import org.example.run.Request;
-import org.example.utils.FileUtil;
-import org.example.utils.JsonUtils;
-import org.example.utils.TrackUtils;
+import org.runrun.entity.AppConfig;
+import org.runrun.entity.Location;
+import org.runrun.entity.NewRecordBody;
+import org.runrun.entity.Response;
+import org.runrun.entity.ResponseType.NewRecordResult;
+import org.runrun.entity.ResponseType.RunStandard;
+import org.runrun.entity.ResponseType.SchoolBound;
+import org.runrun.entity.ResponseType.UserInfo;
+import org.runrun.run.Request;
+import org.runrun.utils.FileUtil;
+import org.runrun.utils.JsonUtils;
+import org.runrun.utils.TrackUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,6 +40,8 @@ import lombok.Setter;
 public class App extends Thread
 {
     AppConfig config;
+    @Setter
+    private InputStream mapInput;
 
     @Setter
     private TextView resultArea;
@@ -102,9 +104,9 @@ public class App extends Thread
         long userId = userInfo.getUserId();
         if (userId != -1) {
             appendMsg("获取跑步标准");
-            RunStandard runStandard = request.getRunStandard();
+            RunStandard runStandard = request.getRunStandard(userInfo.getSchoolId());
             appendMsg("获取学校经纬度区域信息");
-            SchoolBound[] schoolBounds = request.getSchoolBound();
+            SchoolBound[] schoolBounds = request.getSchoolBound(userInfo.getSchoolId());
 
             appendMsg("生成跑步数据");
             // 新增跑步数据
@@ -186,9 +188,15 @@ public class App extends Thread
             });
     }
 
-    public static String genTack(long distance) {
-        InputStream resourceAsStream = org.example.App.class.getResourceAsStream("/map.json");
-        String json = FileUtil.ReadFile(resourceAsStream);
+    public String genTack(long distance) {
+        if(mapInput == null)
+            mapInput = org.runrun.App.class.getResourceAsStream("/map.json");
+        String json = FileUtil.ReadFile(mapInput);
+        try {
+            mapInput.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         if (json.length() == 0) {
             System.out.println("配置读取失败");
             return null;

@@ -1,4 +1,4 @@
-package org.example.utils.HTTP;
+package org.runrun.utils.HTTP;
 
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
