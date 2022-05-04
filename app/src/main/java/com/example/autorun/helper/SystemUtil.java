@@ -1,5 +1,8 @@
 package com.example.autorun.helper;
 
+import android.os.Build;
+import android.provider.Settings;
+
 import java.util.Locale;
 
 /**
@@ -53,4 +56,12 @@ public class SystemUtil {
         return android.os.Build.BRAND;
     }
 
+    /**
+     * 获取手机序列号
+     *
+     * @return 序列号
+     */
+    public static String getSerial() {
+        return Build.SERIAL;
+    }
 }

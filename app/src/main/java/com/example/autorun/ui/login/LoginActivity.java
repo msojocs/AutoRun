@@ -46,6 +46,8 @@ public class LoginActivity extends AppCompatActivity {
     public static final String HOSTS_URI = "HOST_URI";
     public static final String NET_HOST_FILE = "net_hosts";
     public static final String MAP_PREFIX = "地图：";
+    AppConfig appConfig = new AppConfig();
+    App app = new App(appConfig);
     private LoginViewModel loginViewModel;
     private ActivityLoginBinding binding;
 
@@ -81,6 +83,7 @@ public class LoginActivity extends AppCompatActivity {
         final EditText mapFileArea = binding.mapFile;
         final Button loginButton = binding.login;
         final Button loadMapButton = binding.loadMap;
+        final Button checkInButton = binding.signInOrBack;
         final ProgressBar loadingProgressBar = binding.loading;
 
         resultArea.setMovementMethod(ScrollingMovementMethod.getInstance());
@@ -159,7 +162,6 @@ public class LoginActivity extends AppCompatActivity {
                     appConfig.setRunTime(Integer.parseInt(inputTimeEditText.getText().toString()));
 
                 System.out.println(appConfig);
-                App app = new App(appConfig);
                 app.setResultArea(resultArea);
                 app.setLoadingProgressBar(loadingProgressBar);
                 app.start();
@@ -177,20 +179,18 @@ public class LoginActivity extends AppCompatActivity {
             }
         }
 //        loginButton.setEnabled(true);
+        // 配置系统信息
+        appConfig.setBrand(SystemUtil.getDeviceBrand());
+        appConfig.setMobileType(SystemUtil.getSystemModel());
+        appConfig.setSysVersion(SystemUtil.getSystemVersion());
         loginButton.setOnClickListener(v -> {
             resultArea.setText("操作结果：");
             loadingProgressBar.setVisibility(View.VISIBLE);
 
             // 配置填写的信息
-            AppConfig appConfig = new AppConfig();
             appConfig.setPhone(usernameEditText.getText().toString());
             appConfig.setPassword(passwordEditText.getText().toString());
             appConfig.setAppVersion(appVersionEditText.getText().toString());
-
-            // 配置系统信息
-            appConfig.setBrand(SystemUtil.getDeviceBrand());
-            appConfig.setMobileType(SystemUtil.getSystemModel());
-            appConfig.setSysVersion(SystemUtil.getSystemVersion());
 
             String distance = inputDistance.getText().toString();
             if(distance.length()>0)
@@ -210,16 +210,33 @@ public class LoginActivity extends AppCompatActivity {
             }
 
             Log.i(TAG, appConfig.toString());
-            App app = new App(appConfig);
             app.setResultArea(resultArea);
             app.setLoadingProgressBar(loadingProgressBar);
             app.setMapInput(inputStream);
+            app.setType("run");
             app.start();
 //                loginViewModel.login(usernameEditText.getText().toString(),
 //                        passwordEditText.getText().toString());
         });
 
         loadMapButton.setOnClickListener(view -> selectFile());
+        checkInButton.setOnClickListener(v -> {
+            resultArea.setText("操作结果：");
+            loadingProgressBar.setVisibility(View.VISIBLE);
+
+            // 配置填写的信息
+            appConfig.setPhone(usernameEditText.getText().toString());
+            appConfig.setPassword(passwordEditText.getText().toString());
+            appConfig.setAppVersion(appVersionEditText.getText().toString());
+
+//            SharedPreferences settings = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+
+            Log.i(TAG, appConfig.toString());
+            app.setResultArea(resultArea);
+            app.setLoadingProgressBar(loadingProgressBar);
+            app.setType("signInOrBack");
+            app.start();
+        });
         new CheckAllow().start();
     }
 

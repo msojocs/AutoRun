@@ -20,7 +20,9 @@ import org.runrun.entity.Response;
 import org.runrun.entity.ResponseType.NewRecordResult;
 import org.runrun.entity.ResponseType.RunStandard;
 import org.runrun.entity.ResponseType.SchoolBound;
+import org.runrun.entity.ResponseType.SignInTf;
 import org.runrun.entity.ResponseType.UserInfo;
+import org.runrun.entity.SignInOrSignBackBody;
 import org.runrun.run.Request;
 import org.runrun.utils.FileUtil;
 import org.runrun.utils.JsonUtils;
@@ -48,19 +50,22 @@ public class App extends Thread
     @Setter
     ProgressBar loadingProgressBar;
     public static String ERROR;
+    @Setter
+    private String type;
+    private StringBuffer token;
 
     public App(AppConfig config) {
         this.config = config;
     }
 
+//    跑步
     @SuppressLint("DefaultLocale")
-    public void runSub() throws IOException, ParseException {
+    public void runRun() throws IOException, ParseException {
 
         appendMsg("开始");
         // ==========配置 START==============
         String phone = config.getPhone();
         String password = config.getPassword();
-        String token = "";
         int schoolSite = 0;     // 0航空港，1龙泉暂不支持
         long runDistance = config.getDistance();        // 路程米
         int runTime = config.getRunTime();               // 时间分钟
@@ -94,15 +99,19 @@ public class App extends Thread
 
 //        if(config.getRunTime() > 0)return;
 
-        Request request = new Request(token, config);
+        Request request = new Request(token.toString(), config);
         appendMsg("开始登录");
-        UserInfo userInfo = request.login(phone, password);
+        Response<UserInfo> userInfoResponse = request.login(phone, password);
+        UserInfo userInfo = userInfoResponse.getResponse();
         if(userInfo == null ) {
             appendMsg("登录失败");
             return;
         }
         long userId = userInfo.getUserId();
         if (userId != -1) {
+            token.delete(0, token.length());
+            token.append(request.getToken());
+
             appendMsg("获取跑步标准");
             RunStandard runStandard = request.getRunStandard(userInfo.getSchoolId());
             appendMsg("获取学校经纬度区域信息");
@@ -152,9 +161,69 @@ public class App extends Thread
         }
     }
 
+//    签到/签退
+    public void runSignInOrBack() throws IOException {
+        String phone = config.getPhone();
+        String password = config.getPassword();
+        Request request = new Request(token.toString(), config);
+        Response<UserInfo> userInfoResponse = request.getUserInfo();
+        //更新token
+        if(userInfoResponse.getCode() != 10000) {
+            appendMsg("token无效，更新");
+            userInfoResponse = request.login(phone, password);
+            token.delete(0, token.length());
+            token.append(request.getToken());
+        }
+        UserInfo userInfo = userInfoResponse.getResponse();
+
+        if (userInfo != null) {
+            Long studentId = userInfo.getStudentId();
+            SignInTf signInTf = request.getSignInTf(String.valueOf(studentId));
+            appendMsg("待签到俱乐部：{}" + signInTf.toString());
+            String signStatus = signInTf.getSignStatus();
+            String signInStatus = signInTf.getSignInStatus();
+            String signBackStatus = signInTf.getSignBackStatus();
+
+            if ("1".equals(signInStatus) && "1".equals(signBackStatus)) {
+                appendMsg("未知状态");
+                return ;
+            }
+
+            String signType;
+            if ("1".equals(signStatus)) {
+                //    可签到
+                signType = "1";
+            } else if ("1".equals(signInStatus) && "2".equals(signStatus)) {
+                //    可签退
+                signType = "2";
+            } else {
+                appendMsg("非可签到签退状态，或没有可签到项目");
+                return ;
+            }
+
+            SignInOrSignBackBody signInOrSignBackBody = new SignInOrSignBackBody(
+                    signInTf.getActivityId(),
+                    signInTf.getLatitude(),
+                    signInTf.getLongitude(),
+                    signType,
+                    studentId);
+
+            Response signInOrSignBack = request.signInOrSignBack(signInOrSignBackBody);
+            appendMsg("签到结果：");
+            appendMsg(signInOrSignBack.getMsg());
+        } else {
+            appendMsg("用户信息获取失败");
+        }
+    }
     public void run(){
         try{
-            runSub();
+            if("run".equals(type)) {
+                runRun();
+            }else if("signInOrBack".equals(type)){
+                runSignInOrBack();
+            }else{
+                appendMsg("未知操作");
+            }
         }catch (Exception e){
             e.printStackTrace();
             String msg;

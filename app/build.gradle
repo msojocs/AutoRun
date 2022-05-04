@@ -8,10 +8,10 @@ android {
 
     defaultConfig {
         applicationId "com.example.autorun"
-        minSdkVersion 24
+        minSdkVersion 22
         targetSdkVersion 30
         versionCode 1
-        versionName "0.0.6"
+        versionName "1.2.0"
         multiDexEnabled true
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -30,9 +30,10 @@ android {
     buildFeatures {
         viewBinding true
     }
-    packagingOptions{
-        exclude 'META-INF/DEPENDENCIES'
-        exclude 'androidsupportmultidexversion.txt'
+    packagingOptions {
+        resources {
+            excludes += ['META-INF/DEPENDENCIES', 'androidsupportmultidexversion.txt']
+        }
     }
 
 }
@@ -48,8 +49,8 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
-    implementation "org.projectlombok:lombok:1.18.20"
-    annotationProcessor "org.projectlombok:lombok:1.18.20"
+    compileOnly 'org.projectlombok:lombok:1.18.24'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
     api 'com.github.ok2c.hc5.android:httpclient-android:0.1.1'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.12.3'
     implementation 'com.android.support:multidex:1.0.3'

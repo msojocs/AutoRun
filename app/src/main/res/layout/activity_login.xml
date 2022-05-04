@@ -82,7 +82,7 @@
         android:text="@string/prompt_app_version_default"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/inputDistance"
-        tools:text="1.8.0" />
+        tools:text="1.8.3" />
 
     <com.google.android.material.textfield.TextInputEditText
         android:id="@+id/inputDistance"
@@ -108,18 +108,17 @@
 
     <TextView
         android:id="@+id/result"
-        android:layout_width="328dp"
-        android:layout_height="210dp"
-        android:layout_marginStart="4dp"
-        android:layout_marginTop="24dp"
+        android:layout_width="352dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
         android:scrollbars="horizontal"
         android:scrollHorizontally="false"
         android:text="@string/omen_result"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/login"
-        app:layout_constraintVertical_bias="0.024" />
+        app:layout_constraintTop_toBottomOf="@+id/signInOrBack" />
 
     <Button
         android:id="@+id/load_map"
@@ -150,5 +149,22 @@
         android:text="@string/map_default"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/inputTime" />
+
+    <Button
+        android:id="@+id/signInOrBack"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="40dp"
+        android:layout_marginTop="20dp"
+        android:text="@string/check_in"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/load_map" />
+
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/barrier2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:barrierDirection="left"
+        app:constraint_referenced_ids="result" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -84,7 +84,8 @@ public class App {
         System.out.printf("平均配速：%.2f\n", average);
 
         Request request = new Request(token, config);
-        UserInfo userInfo = request.login(phone, password);
+        Response<UserInfo> userInfoResponse = request.login(phone, password);
+        UserInfo userInfo = userInfoResponse.getResponse();
         long userId = userInfo.getUserId();
         if (userId != -1) {
             RunStandard runStandard = request.getRunStandard(userInfo.getSchoolId());
@@ -132,4 +133,5 @@ public class App {
         Location[] locations = JsonUtils.string2Obj(json, Location[].class);
         return TrackUtils.gen(distance, locations);
     }
+
 }
