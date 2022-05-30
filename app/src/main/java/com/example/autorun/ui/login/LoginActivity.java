@@ -47,7 +47,6 @@ public class LoginActivity extends AppCompatActivity {
     public static final String NET_HOST_FILE = "net_hosts";
     public static final String MAP_PREFIX = "地图：";
     AppConfig appConfig = new AppConfig();
-    App app = new App(appConfig);
     private LoginViewModel loginViewModel;
     private ActivityLoginBinding binding;
 
@@ -83,7 +82,7 @@ public class LoginActivity extends AppCompatActivity {
         final EditText mapFileArea = binding.mapFile;
         final Button loginButton = binding.login;
         final Button loadMapButton = binding.loadMap;
-        final Button checkInButton = binding.signInOrBack;
+        final Button signInButton = binding.signInOrBack;
         final ProgressBar loadingProgressBar = binding.loading;
 
         resultArea.setMovementMethod(ScrollingMovementMethod.getInstance());
@@ -96,6 +95,7 @@ public class LoginActivity extends AppCompatActivity {
                 return;
             }
             loginButton.setEnabled(loginFormState.isDataValid());
+            signInButton.setEnabled(loginFormState.isDataValid());
             if (loginFormState.getUsernameError() != null) {
                 usernameEditText.setError(getString(loginFormState.getUsernameError()));
             }
@@ -142,6 +142,7 @@ public class LoginActivity extends AppCompatActivity {
         passwordEditText.addTextChangedListener(afterTextChangedListener);
         passwordEditText.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
+                App app = new App(appConfig);
                 resultArea.setText("操作结果：");
                 loadingProgressBar.setVisibility(View.VISIBLE);
 
@@ -184,6 +185,7 @@ public class LoginActivity extends AppCompatActivity {
         appConfig.setMobileType(SystemUtil.getSystemModel());
         appConfig.setSysVersion(SystemUtil.getSystemVersion());
         loginButton.setOnClickListener(v -> {
+            App app = new App(appConfig);
             resultArea.setText("操作结果：");
             loadingProgressBar.setVisibility(View.VISIBLE);
 
@@ -220,7 +222,8 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         loadMapButton.setOnClickListener(view -> selectFile());
-        checkInButton.setOnClickListener(v -> {
+        signInButton.setOnClickListener(v -> {
+            App app = new App(appConfig);
             resultArea.setText("操作结果：");
             loadingProgressBar.setVisibility(View.VISIBLE);
 

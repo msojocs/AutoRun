@@ -52,10 +52,11 @@ public class App extends Thread
     public static String ERROR;
     @Setter
     private String type;
-    private StringBuffer token;
+    private final StringBuffer token;
 
     public App(AppConfig config) {
         this.config = config;
+        token = config.getToken();
     }
 
 //    跑步
@@ -79,6 +80,11 @@ public class App extends Thread
         }
         // 计算平均配速，防止跑太快
         double average = 1.0 * runTime / runDistance * 1000;
+
+        if(Double.isNaN(average)){
+            appendMsg("输入不正确");
+            return;
+        }
         if (average < 6) {
             String[] notice = {
                     "我认为这种事情是不可能的",

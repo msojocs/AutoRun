@@ -1,5 +1,7 @@
 package org.runrun.utils.HTTP;
 
+import android.os.Build;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.HttpHostConnectException;
@@ -317,8 +319,16 @@ public class HttpUtil2 {
     }
     public CloseableHttpResponse doPostJson2CHR(String url, Map<String, String> headers, String body) throws IOException {
         HttpPost httpPost = new HttpPost(url);
-        if(headers != null)
-            headers.forEach(httpPost::setHeader);
+        if(headers != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                headers.forEach(httpPost::setHeader);
+            }else{
+                Set<Map.Entry<String, String>> entries = headers.entrySet();
+                for (Map.Entry<String, String> entry : entries) {
+                    httpPost.setHeader(entry.getKey(), entry.getValue());
+                }
+            }
+        }
         HttpEntity entity = EntityBuilder.create().setText(body).build();
         httpPost.setEntity(entity);
         httpPost.setHeader("Content-Type", "application/json");
@@ -502,7 +512,15 @@ public class HttpUtil2 {
     }
 
     private static void addHeader(HttpUriRequestBase http, Map<String, String> headers) {
-        if (null != headers) headers.forEach(http::setHeader);
+        if (null == headers)return;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            headers.forEach(http::setHeader);
+        }else{
+            Set<Map.Entry<String, String>> entries = headers.entrySet();
+            for (Map.Entry<String, String> entry : entries) {
+                http.setHeader(entry.getKey(), entry.getValue());
+            }
+        }
     }
 
     private static String getString(CloseableHttpResponse response, String charset) throws IOException, ParseException {

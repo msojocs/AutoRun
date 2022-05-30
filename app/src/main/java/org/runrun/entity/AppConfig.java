@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 public class AppConfig {
     private String phone;
     String password;
+    private StringBuffer token = new StringBuffer();
 
     long distance;
     int runTime;

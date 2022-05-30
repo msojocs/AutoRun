@@ -18,7 +18,7 @@
     <string name="map_default">默认（hkg）</string>
     <string name="check_in">签到/签退</string>
     <string name="login_failed">"Login failed"</string>
-    <string name="omen_result">更新日志：\n自定义路径地图支持</string>
+    <string name="omen_result">本程序完全免费,仅供学习交流使用,请在下载后24小时内删除本程序,对此造成的一切后果由使用着承担.\n更新日志：\n签到/签退支持</string>
     <string name="file_select_error">Error ! System File Browser Not Find, Will Use Url Mode</string>
     <string name="permission_error">Error ! No Permission</string>
     <string name="file_select_ok">OK!</string>
