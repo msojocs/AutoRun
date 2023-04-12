@@ -35,6 +35,7 @@ android {
             excludes += ['META-INF/DEPENDENCIES', 'androidsupportmultidexversion.txt']
         }
     }
+    namespace 'com.example.autorun'
 
 }
 
