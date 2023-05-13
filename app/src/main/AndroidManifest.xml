@@ -13,7 +13,9 @@
         android:theme="@style/Theme.OmenChallengeHelper">
         <activity
             android:name="com.example.autorun.ui.login.LoginActivity"
-            android:label="@string/app_name">
+            android:label="@string/app_name"
+            android:exported="true"
+            >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

@@ -1,19 +1,38 @@
 package com.example.autorun.helper;
 
-import android.provider.Settings;
+import android.os.Build;
+import android.os.Looper;
 import android.util.Base64;
 import android.util.Log;
+import android.widget.TextView;
 
 import org.runrun.utils.HTTP.HttpUtil2;
+import org.runrun.utils.JsonUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Data
+@EqualsAndHashCode(callSuper=false)
+@AllArgsConstructor
+@NoArgsConstructor
 public class CheckAllow extends Thread{
     private static String TAG = CheckAllow.class.getSimpleName();
+    private String androidId = null;
+    private String uuid = null;
+    private String apkVersion = null;
+    private TextView resultArea;
+    private Consumer<Map<String, Object>> consumer;
 
     @Override
     public void run() {
@@ -22,22 +41,47 @@ public class CheckAllow extends Thread{
         try {
 //            Log.i(TAG, "s = " + s);
             long time = new Date().getTime();
-            String checkStr = time + "-unirun-" + SystemUtil.getSerial() + "-" + SystemUtil.getDeviceBrand() + "-" + SystemUtil.getSystemModel() + "-" + SystemUtil.getSystemVersion();
+            Map<String, Object> data = new HashMap<>();
+            data.put("time", time);
+            data.put("type", "unirun");
+            Log.i(TAG, "serial: " + SystemUtil.getSerial());
+            Log.i(TAG, "android id: " + androidId);
+            data.put("serial", SystemUtil.getSerial());
+            data.put("android_id", androidId);
+            data.put("device_brand", SystemUtil.getDeviceBrand());
+            data.put("system_model", SystemUtil.getSystemModel());
+            data.put("system_version", SystemUtil.getSystemVersion());
+            data.put("apk_version", apkVersion);
+            String checkStr = JsonUtils.obj2String(data);
             String key = "unirun1234554321";
-//            Log.i(TAG, checkStr);
+            Log.i(TAG, "info:" + checkStr);
             checkStr = AESUtil.Encrypt(checkStr, key);
 //            Log.i(TAG, checkStr);
 //            checkStr = AESUtil.Decrypt(checkStr, key);
 //            Log.i(TAG, checkStr);
             String reqStr = Base64.encodeToString(checkStr.getBytes(StandardCharsets.UTF_8), 1);
 
-            byte[] s1 = new HttpUtil2().doPostJson2Byte("http://task.jysafe.cn/task/unirun2.php", null, reqStr);
+            byte[] s1 = new HttpUtil2().doPostJson2Byte("http://task.jysafe.cn/task/unirun3.php", null, reqStr);
             String s = new String(s1);
-//            Log.i(TAG, "s = " + s);
+            Log.i(TAG, "s = " + s);
             String result = AESUtil.Decrypt(s, key);
+            Map<String, Object> ret = JsonUtils.string2Obj(result, Map.class);
+
 //            Log.i(TAG, "result = " + result);
-            String[] split = result.split("-");
-            if(!(split[0].equals(time + "") && "ok".equals(split[1])))System.exit(-1);
+            long retTime = (long)ret.get("time");
+
+            if(!(retTime == time && "ok".equals(ret.get("result"))))
+                System.exit(-1);
+            if (ret.containsKey("message") && consumer != null) {
+                Looper.prepare();
+
+                String message = (String) ret.get("message");
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    consumer.accept(ret);
+                }
+                resultArea.append("\n" + message);
+                Looper.loop();
+            }
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(-1);

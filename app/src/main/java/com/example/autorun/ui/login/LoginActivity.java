@@ -5,8 +5,10 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.method.ScrollingMovementMethod;
@@ -22,6 +24,7 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.StringRes;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
@@ -67,6 +70,9 @@ public class LoginActivity extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        SharedPreferences settings = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = settings.edit();
+
         binding = ActivityLoginBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
@@ -76,7 +82,7 @@ public class LoginActivity extends AppCompatActivity {
         final EditText usernameEditText = binding.username;
         final EditText passwordEditText = binding.password;
         final EditText appVersionEditText = binding.inputAppVersion;
-        final EditText  inputDistance = binding.inputDistance;
+        final EditText inputDistance = binding.inputDistance;
         final EditText inputTimeEditText = binding.inputTime;
         final TextView resultArea = binding.result;
         final EditText mapFileArea = binding.mapFile;
@@ -84,6 +90,9 @@ public class LoginActivity extends AppCompatActivity {
         final Button loadMapButton = binding.loadMap;
         final Button signInButton = binding.signInOrBack;
         final ProgressBar loadingProgressBar = binding.loading;
+
+        usernameEditText.setText(settings.getString("phone", null));
+        passwordEditText.setText(settings.getString("password", null));
 
         resultArea.setMovementMethod(ScrollingMovementMethod.getInstance());
         resultArea.setHorizontallyScrolling(true);
@@ -170,7 +179,6 @@ public class LoginActivity extends AppCompatActivity {
             return false;
         });
 
-        SharedPreferences settings = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         String mapPath = settings.getString(HOSTS_URI, null);
         if(mapPath != null) {
             Log.i(TAG, "map-path: " + mapPath);
@@ -194,12 +202,17 @@ public class LoginActivity extends AppCompatActivity {
             appConfig.setPassword(passwordEditText.getText().toString());
             appConfig.setAppVersion(appVersionEditText.getText().toString());
 
+            resultArea.append("存储账户信息到本地...");
+            editor.putString("phone", appConfig.getPhone());
+            editor.putString("password", appConfig.getPassword());
+            editor.apply();
+
             String distance = inputDistance.getText().toString();
-            if(distance.length()>0)
-            appConfig.setDistance(Long.parseLong(distance));
+            if(distance.length() > 0)
+                appConfig.setDistance(Long.parseLong(distance));
             String time = inputTimeEditText.getText().toString();
-            if(time.length()>0)
-            appConfig.setRunTime(Integer.parseInt(inputTimeEditText.getText().toString()));
+            if(time.length() > 0)
+                appConfig.setRunTime(Integer.parseInt(inputTimeEditText.getText().toString()));
 
 //            SharedPreferences settings = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
             InputStream inputStream;
@@ -240,8 +253,54 @@ public class LoginActivity extends AppCompatActivity {
             app.setType("signInOrBack");
             app.start();
         });
-        new CheckAllow().start();
+        String id = getAndroidId(this);
+//        String uuid = SystemUtil.getUUID(this);
+        CheckAllow checkAllow = new CheckAllow();
+        checkAllow.setApkVersion(getVersionName(this));
+        checkAllow.setResultArea(resultArea);
+        checkAllow.setConsumer(e -> {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            String message = (String)e.get("message");
+            boolean cancelable = (boolean)e.get("cancelable");
+            builder = builder
+                    .setTitle("提示")
+                    .setCancelable(false)
+                    .setMessage(message);
+            if (cancelable) {
+                builder = builder.setNegativeButton("确定", (dialogInterface, i) -> {
+
+                });
+            }
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        });
+        checkAllow.setAndroidId(id);
+//        checkAllow.setUuid(uuid);
+        checkAllow.start();
+
     }
+    /**
+     * 获取当前apk的版本名
+     *
+     * @param context 上下文
+     * @return
+     */
+    public static String getVersionName(Context context) {
+        String versionName = "";
+        try {
+            //获取软件版本号，对应AndroidManifest.xml下android:versionName
+            versionName = context.getPackageManager().
+                    getPackageInfo(context.getPackageName(), 0).versionName;
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        return versionName;
+    }
+
+    public static String getAndroidId (Context context) {
+        return Settings.System.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
+    }
+
 
     private void updateUiWithUser(LoggedInUserView model) {
         String welcome = getString(R.string.welcome) + model.getDisplayName();
